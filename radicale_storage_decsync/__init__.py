@@ -94,17 +94,21 @@ class Collection(storage.Collection, CollectionHrefMappingsMixin):
             self.load_hrefs(sync_type)
 
     def upload(self, href, orig_item, update_decsync=True):
-        item = super().upload(href, orig_item)
+        result = super().upload(href, orig_item)
+        if isinstance(result, tuple):
+            item = next((x for x in result if hasattr(x, "uid")), result[1])
+        else:
+            item = result
         if update_decsync:
-            tag = self.get_meta("tag")
-            if tag == "VCALENDAR":
-                supported_components = (self.get_meta("C:supported-calendar-component-set") or "VEVENT,VTODO,VJOURNAL").split(",")
-                component_name = item.component_name
-                if len(supported_components) > 1 and component_name != "VEVENT":
-                    raise RuntimeError("Component " + component_name + " is not supported by old DecSync collections. Create a new collection in Radicale for support.")
-            self.set_href(item.uid, href)
-            self.decsync.set_entry(["resources", item.uid], None, item.serialize())
-        return item
+            if hasattr(self, 'decsync'):
+                tag = self.get_meta("tag")
+                if tag == "VCALENDAR":
+                    supported = (self.get_meta("C:supported-calendar-component-set") or "VEVENT,VTODO,VJOURNAL").split(",")
+                    if len(supported) > 1 and item.component_name != "VEVENT":
+                        raise RuntimeError("Component not supported by old DecSync.")
+                self.set_href(item.uid, href)
+                self.decsync.set_entry(["resources", item.uid], None, item.serialize())
+        return result
 
     def delete(self, href=None, update_decsync=True):
         if update_decsync:
@@ -157,8 +161,8 @@ class Storage(storage.Storage):
             self.decsync_dir = ""
 
     def discover(self, path, depth="0", child_context_manager=(
-            lambda path, href=None: contextlib.ExitStack())):
-        collections = list(super().discover(path, depth, child_context_manager))
+            lambda path, href=None: contextlib.ExitStack()),user_groups=set()):
+        collections = list(super().discover(path, depth, child_context_manager, user_groups))
         for collection in collections:
             yield collection
 
@@ -246,12 +250,16 @@ class Storage(storage.Storage):
             raise RuntimeError("Unknown tag " + tag)
 
         if collection.startswith(sync_type + "-"):
-            path = "/%s/%s/" % (username, collection)
+            path = href 
         else:
             path = "/%s/%s-%s/" % (username, sync_type, collection)
-        col = super().create_collection(path, None, props)
+        result = super().create_collection(path, None, props)
+        if isinstance(result, tuple):
+            col = next((x for x in result if hasattr(x, "get_href")), result[0])
+        else:
+            col = result
         if items is not None:
             for item in items:
                 href = col.get_href(item.uid)
-                col.upload(href, item)
-        return col
+                col.upload(href, item)    
+        return result
