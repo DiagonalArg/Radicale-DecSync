@@ -107,6 +107,10 @@ class Collection(storage.Collection, CollectionHrefMappingsMixin):
                     if len(supported) > 1 and item.component_name != "VEVENT":
                         raise RuntimeError("Component not supported by old DecSync.")
                 self.set_href(item.uid, href)
+                # Ensure structured data (lists/tuples) are stringified before serialization
+                for component in item.vobject_item.getChildren():
+                    if isinstance(component.value, (list, tuple)):
+                        component.value = ";".join(str(x) for x in component.value)
                 self.decsync.set_entry(["resources", item.uid], None, item.serialize())
         return result
 
