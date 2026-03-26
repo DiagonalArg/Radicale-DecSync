@@ -179,7 +179,11 @@ class Storage(storage.Storage):
             return
         elif len(attributes) == 1:
             username = attributes[0]
-            known_paths = [collection.path for collection in collections]
+            known_paths = []
+            for collection in collections:
+                if isinstance(collection, tuple):
+                    collection = next((x for x in collection if hasattr(x, "path")), collection[0])
+                known_paths.append(collection.path)
             for sync_type in ["contacts", "calendars", "tasks", "memos"]:
                 for collection in Decsync.list_collections(self.decsync_dir, sync_type):
                     child_path = "/%s/%s-%s/" % (username, sync_type, collection)
@@ -201,7 +205,11 @@ class Storage(storage.Storage):
                             props["C:supported-calendar-component-set"] = "VJOURNAL"
                         else:
                             raise RuntimeError("Unknown sync type " + sync_type)
-                    child = super().create_collection(child_path, props=props)
+                    result = super().create_collection(child_path, props=props)
+                    if isinstance(result, tuple):
+                        child = next((x for x in result if hasattr(x, "decsync")), result[0])
+                    else:
+                        child = result
                     child.decsync.init_stored_entries()
                     child.decsync.execute_stored_entries_for_path_exact(["info"], child)
                     child.decsync.execute_stored_entries_for_path_prefix(["resources"], child)
