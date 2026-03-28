@@ -16,7 +16,7 @@ setup(
     packages=["radicale_storage_decsync"],
     install_requires=[
         "radicale>=3",
-        "libdecsync @ git+https://github.com/DiagonalArg/libdecsync-bindings-python3.git@fix/remove-pkg-resources"
+        "libdecsync @ git+https://github.com/DiagonalArg/libdecsync-bindings-python3.git@master"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
