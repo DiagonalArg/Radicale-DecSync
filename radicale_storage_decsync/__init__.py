@@ -109,6 +109,7 @@ class Collection(storage.Collection, CollectionHrefMappingsMixin):
                 self.set_href(item.uid, href)
                 # Ensure structured data (lists/tuples) are stringified before serialization
                 for component in item.vobject_item.getChildren():
+                    component_value = getattr(component, 'value', None)
                     if isinstance(component.value, (list, tuple)):
                         component.value = ";".join(str(x) for x in component.value)
                 self.decsync.set_entry(["resources", item.uid], None, item.serialize())
