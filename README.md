@@ -1,3 +1,6 @@
+> ⚠️  **Maintenance Notice:** This is an actively maintained fork of 39aldo39/Radicale-DecSync, updated for compatibility with Python 3.12+ and Radicale 3.x.
+> ⚠️  **Disclaimer:** I am not adding functionality.  These are bug fix and compatibility releases.  Thank you for any input.
+
 Radicale DecSync
 ================
 
