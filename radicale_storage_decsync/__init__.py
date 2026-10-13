@@ -85,7 +85,10 @@ class Collection(storage.Collection, CollectionHrefMappingsMixin):
                         tag = "VADDRESSBOOK"
                     else:
                         tag = "VCALENDAR"
-                    radicale_item.check_and_sanitize_items([vobject_item], tag=tag)
+                    max_vevent_rrule_occurrence = extra._storage.configuration.get(
+                        "server", "max_vevent_rrule_occurrence")
+                    radicale_item.check_and_sanitize_items(
+                        [vobject_item], max_vevent_rrule_occurrence, tag=tag)
                     item = radicale_item.Item(collection=extra, vobject_item=vobject_item, uid=uid)
                     item.prepare()
                     extra.upload(href, item, update_decsync=False)
